@@ -36,6 +36,7 @@ class Elevators:
         self.inside_buttons = []
         self.up_wait_list = []
         self.down_wait_list = []
+        self.out_command_list = [[], [], [], [], []]
 
 
 class UIMainWindow(QWidget):
@@ -171,11 +172,13 @@ class UIMainWindow(QWidget):
 
         # 添加每一层的按钮
         floor_button_layout = QtWidgets.QWidget(self)
-        floor_button_layout.setGeometry(QtCore.QRect(50, 20, 1200, 180))
+        floor_button_layout.setGeometry(QtCore.QRect(40, 20, 1260, 180))
         floor_button_layout.setObjectName("floor_button_layout")
         grid = QtWidgets.QGridLayout(floor_button_layout)
         grid.setVerticalSpacing(0)
-        grid.setRowMinimumHeight(1, 40)
+        grid.setRowMinimumHeight(1, 36)
+        for i in range(30):
+            grid.setColumnMinimumWidth(i+1, 36)
         grid.setContentsMargins(0, 0, 0, 0)
         grid.setObjectName("floor_button_grid")
 
