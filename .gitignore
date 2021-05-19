@@ -2,3 +2,5 @@ build/
 dist/
 venv/
 .idea/
+src/__pycache__/
+src/main.spec
