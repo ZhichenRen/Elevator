@@ -1,0 +1,13 @@
+<!DOCTYPE RCC><RCC version="1.0"> 
+ <qresource prefix="/Resources/Button">
+    <file alias="down.png">./Resources/Button/down.png</file>
+    <file alias="down_hover.png">./Resources/Button/down_hover.png</file>
+    <file alias="down_pressed.png">./Resources/Button/down_pressed.png</file>
+    <file alias="up.png">./Resources/Button/up.png</file>
+    <file alias="up_hover.png">./Resources/Button/up_hover.png</file>
+    <file alias="up_pressed.png">./Resources/Button/up_pressed.png</file>
+    <file alias="state.png">./Resources/Button/state.png</file>
+    <file alias="state_up.png">./Resources/Button/state_up.png</file>
+    <file alias="state_down.png">./Resources/Button/state_down.png</file>
+  </qresource>
+</RCC>
