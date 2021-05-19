@@ -29,9 +29,17 @@ class Dispatcher:
         self.elevators.floor_button_positions[elevator].setEnabled(False)
         self.elevators.elevator_front_left[elevator].setEnabled(False)
         self.elevators.elevator_front_right[elevator].setEnabled(False)
-        # self.elevators.elevator_animation_left[elevator].setEnabled(False)
         self.elevators.floor_lcd[elevator].setEnabled(False)
-        # self.elevators.status[elevator].setEnabled(False)
+        self.elevators.elevator_state[elevator] = STOP
+        self.elevators.stop_queue[elevator].clear()
+        self.elevators.wait_queue[elevator].clear()
+        while len(self.elevators.out_command_list[elevator]) != 0:
+            floor = self.elevators.out_command_list[elevator].pop(0)
+            self.elevators.up_wait_list.append(floor)
+
+        for inside_button in self.elevators.inside_buttons:
+            if f"button {elevator}" in inside_button.objectName():
+                inside_button.setStyleSheet("")
 
         check = False
         for i in range(5):
@@ -58,9 +66,7 @@ class Dispatcher:
                     self.elevators.stop_queue[elevator].append(to_floor)
                     self.elevators.stop_queue[elevator].sort()
                 else:
-                    # TODO: reverse
                     self.elevators.wait_queue[elevator].append(to_floor)
-                    pass
         elif from_floor > to_floor:
             if self.elevators.elevator_state[elevator] == STOP:
                 self.elevators.stop_queue[elevator].append(to_floor)
@@ -69,23 +75,22 @@ class Dispatcher:
                     self.elevators.stop_queue[elevator].append(to_floor)
                     self.elevators.stop_queue[elevator].sort(reverse=True)
                 else:
-                    # TODO: reverse
                     self.elevators.wait_queue[elevator].append(to_floor)
-                    pass
 
     def dispatch(self, to_floor, direction):
         distance = [100] * 5
         best_choice = -1
         min_distance = 100
-        free_elevator_available = False
         for i in range(5):
             if not self.elevators.elevator_working[i]:
                 continue
             if direction == self.elevators.elevator_state[i]:
                 if direction == UP and to_floor > self.elevators.elevator_floor[i]:
-                    distance[i] = abs(to_floor - self.elevators.elevator_floor[i]) + 2*len(self.elevators.stop_queue[i])
+                    distance[i] = abs(to_floor - self.elevators.elevator_floor[i]) + 2 * len(
+                        self.elevators.stop_queue[i])
                 elif direction == DOWN and to_floor < self.elevators.elevator_floor[i]:
-                    distance[i] = abs(to_floor - self.elevators.elevator_floor[i]) + 2 * len(self.elevators.stop_queue[i])
+                    distance[i] = abs(to_floor - self.elevators.elevator_floor[i]) + 2 * len(
+                        self.elevators.stop_queue[i])
             elif self.elevators.elevator_state[i] == STOP:
                 distance[i] = abs(to_floor - self.elevators.elevator_floor[i]) + 2 * len(self.elevators.stop_queue[i])
 
@@ -108,6 +113,7 @@ class Dispatcher:
                                           "QPushButton:pressed{border-image: url(:/Resources/Button/down_pressed.png)}")
 
             else:
+                self.elevators.out_command_list[best_choice].append(to_floor)
                 self.elevators.stop_queue[best_choice].append(to_floor)
                 if self.elevators.elevator_state[best_choice] == UP:
                     self.elevators.stop_queue[best_choice].sort()
@@ -120,8 +126,7 @@ class Dispatcher:
                 self.elevators.down_wait_list.append(to_floor)
 
     def update_elevator_status(self):
-        print(f"向上等待队列为{self.elevators.up_wait_list}")
-        print(f"向下等待队列为{self.elevators.down_wait_list}")
+        # 重新分配外部等待队列中的任务
         length = len(self.elevators.up_wait_list)
         for _ in range(length):
             to_floor = self.elevators.up_wait_list[0]
@@ -135,6 +140,7 @@ class Dispatcher:
         for i in range(5):
             if len(self.elevators.stop_queue[i]):
                 to_floor = self.elevators.stop_queue[i][0]
+
                 if self.elevators.elevator_state[i] == AT_DESTINATION:
                     self.open_door_animation(i)
                     button = self.elevators.inside_buttons[0]
@@ -153,9 +159,11 @@ class Dispatcher:
                     down_button.setStyleSheet("QPushButton{border-image: url(:/Resources/Button/down.png)}"
                                               "QPushButton:hover{border-image: url(:/Resources/Button/down_hover.png)}"
                                               "QPushButton:pressed{border-image: url(:/Resources/Button/down_pressed.png)}")
-                    self.elevators.stop_queue[i].pop(0)
+                    stop_floor = self.elevators.stop_queue[i].pop(0)
+                    if stop_floor in self.elevators.out_command_list[i]:
+                        self.elevators.out_command_list[i].remove(stop_floor)
                     if len(self.elevators.stop_queue[i]) == 0:
-                        if len(self.elevators.wait_queue) == 0:
+                        if len(self.elevators.wait_queue[i]) == 0:
                             self.elevators.elevator_state[i] = STOP
                             self.elevators.status_light[i].setStyleSheet(
                                 "QGraphicsView{border-image: url(:/Resources/Button/state.png)}")
@@ -166,7 +174,7 @@ class Dispatcher:
                                 self.elevators.stop_queue[i].sort(reverse=True)
                             elif self.elevators.elevator_state == DOWN:
                                 self.elevators.stop_queue[i].sort()
-                    else:
+                    if len(self.elevators.stop_queue[i]) != 0:
                         if self.elevators.elevator_floor[i] < self.elevators.stop_queue[i][0]:
                             self.elevators.elevator_state[i] = UP
                         else:
@@ -192,5 +200,3 @@ class Dispatcher:
                 self.elevators.elevator_state[i] = STOP
                 self.elevators.status_light[i].setStyleSheet(
                     "QGraphicsView{border-image: url(:/Resources/Button/state.png)}")
-            print(f"电梯{i + 1}的停靠队列为{self.elevators.stop_queue[i]}")
-            print(f"电梯{i + 1}的等待队列为{self.elevators.wait_queue[i]}")
